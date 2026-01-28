@@ -1,0 +1,7 @@
+project_id = "pmzcsfoylqtkexrdnvhm"
+
+[functions.analyze-repo]
+verify_jwt = false
+
+[functions.chat-repo]
+verify_jwt = false
