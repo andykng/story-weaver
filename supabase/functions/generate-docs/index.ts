@@ -36,58 +36,88 @@ serve(async (req) => {
       .map(f => `${f.type === 'dir' ? '📁' : '📄'} ${f.path}`)
       .join('\n');
 
-    const systemPrompt = `You are an expert technical documentation writer. Generate comprehensive, well-structured documentation in HTML format with embedded CSS.
+    // Identify configuration files
+    const configFiles = contents.filter(f => 
+      f.type === 'file' && (
+        f.name.includes('config') ||
+        f.name.includes('.env') ||
+        f.name.includes('docker') ||
+        f.name.includes('yaml') ||
+        f.name.includes('yml') ||
+        f.name.includes('toml') ||
+        f.name.includes('json') ||
+        f.name.includes('Makefile') ||
+        f.name.includes('Dockerfile') ||
+        f.name.includes('.sh') ||
+        f.name.includes('nginx') ||
+        f.name.includes('apache')
+      )
+    ).map(f => f.path);
 
-The documentation must:
-1. Be styled like GitHub README (clean, readable, monospace for code)
-2. Include a complete HTML page with embedded CSS
-3. Use modern, responsive design
-4. Include syntax highlighting for code blocks
-5. Generate Mermaid.js diagrams for architecture and data flow where relevant
-6. Be self-contained (single HTML file with all CSS inline)
+    const systemPrompt = `Tu es un expert en rédaction de documentation technique. Génère une documentation complète et bien structurée en format HTML avec CSS intégré.
 
-Structure the documentation with:
-- Project Overview
-- Features
-- Architecture (with Mermaid diagram)
-- Installation & Setup
-- Usage Examples
-- API Reference (if applicable)
-- Data Flow (with Mermaid diagram if complex)
-- File Structure
-- Contributing Guidelines
-- License Information
+IMPORTANT: Toute la documentation doit être rédigée EN FRANÇAIS.
 
-Use this CSS framework for GitHub-like styling:
+La documentation doit:
+1. Être stylisée comme un README GitHub (propre, lisible, monospace pour le code)
+2. Inclure une page HTML complète avec CSS intégré
+3. Utiliser un design moderne et responsive
+4. Inclure la coloration syntaxique pour les blocs de code
+5. Générer des diagrammes Mermaid.js pour l'architecture et le flux de données
+6. Être autonome (fichier HTML unique avec tout le CSS inline)
+7. INCLURE UNE SECTION DÉDIÉE AUX FICHIERS DE CONFIGURATION
+
+Structure de la documentation:
+- Vue d'ensemble du projet
+- Fonctionnalités principales
+- Architecture (avec diagramme Mermaid)
+- Fichiers de Configuration (liste détaillée avec explications)
+- Installation et Configuration
+- Exemples d'utilisation
+- Référence API (si applicable)
+- Flux de données (avec diagramme Mermaid)
+- Structure des fichiers
+- Guide de contribution
+- Informations de licence
+
+Utilise ce framework CSS pour le style GitHub:
 - Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif
-- Code font: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace
-- Primary color: #0969da for links
-- Background: #ffffff, secondary: #f6f8fa
-- Border color: #d0d7de
-- Max-width: 1012px centered
+- Font code: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace
+- Couleur primaire: #0969da pour les liens
+- Fond: #ffffff, secondaire: #f6f8fa
+- Couleur bordure: #d0d7de
+- Max-width: 1012px centré
 
-IMPORTANT: Your response must be ONLY the complete HTML document, starting with <!DOCTYPE html> and ending with </html>. No markdown, no explanations.`;
+IMPORTANT: Ta réponse doit être UNIQUEMENT le document HTML complet, commençant par <!DOCTYPE html> et terminant par </html>. Pas de markdown, pas d'explications.`;
 
-    const userPrompt = `Generate complete HTML/CSS documentation for this GitHub repository:
+    const userPrompt = `Génère une documentation HTML/CSS complète EN FRANÇAIS pour ce dépôt GitHub:
 
-**Repository**: ${repoFullName}
-**Name**: ${repoName}
-**Description**: ${description || 'No description provided'}
-**Primary Language**: ${language || 'Not specified'}
-**Topics**: ${topics?.join(', ') || 'None'}
+**Dépôt**: ${repoFullName}
+**Nom**: ${repoName}
+**Description**: ${description || 'Aucune description fournie'}
+**Langage principal**: ${language || 'Non spécifié'}
+**Thèmes**: ${topics?.join(', ') || 'Aucun'}
 
-**File Structure**:
+**Fichiers de configuration identifiés**:
+${configFiles.length > 0 ? configFiles.join('\n') : 'Aucun fichier de configuration détecté'}
+
+**Structure des fichiers**:
 ${fileTree}
 
-**README Content**:
+**Contenu du README**:
 ${readme}
 
-Generate a complete, production-ready HTML documentation page with:
-1. Architecture diagram using Mermaid.js syntax (wrapped in <pre class="mermaid">)
-2. Data flow diagram if the project has complex data handling
-3. All sections properly formatted
-4. Responsive design
-5. Include Mermaid.js CDN script for diagram rendering`;
+Génère une page de documentation HTML prête pour la production avec:
+1. Diagramme d'architecture utilisant la syntaxe Mermaid.js (dans <pre class="mermaid">)
+2. Diagramme de flux de données si le projet a une gestion complexe des données
+3. Section dédiée aux fichiers de configuration avec:
+   - Liste de tous les fichiers de config trouvés
+   - Explication du rôle de chaque fichier
+   - Variables d'environnement importantes à configurer
+4. Toutes les sections correctement formatées
+5. Design responsive
+6. Script CDN Mermaid.js pour le rendu des diagrammes
+7. TOUT LE TEXTE EN FRANÇAIS`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
