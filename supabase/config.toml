@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.chat-repo]
 verify_jwt = false
+
+[functions.generate-docs]
+verify_jwt = false
