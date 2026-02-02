@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { FileText, Download, Loader2, ExternalLink, AlertCircle, CheckCircle2, FolderArchive } from 'lucide-react';
+import { FileText, Download, Loader2, ExternalLink, AlertCircle, CheckCircle2, FolderArchive, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { Link } from 'react-router-dom';
 
 type GenerationStep = 'idle' | 'fetching' | 'analyzing' | 'generating' | 'complete' | 'error';
 
@@ -124,6 +125,22 @@ Open index.html in any web browser to view the documentation.
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <span className="font-semibold">GitDocs</span>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/infra">
+              <Server className="h-4 w-4 mr-2" />
+              Documentation Infrastructure
+            </Link>
+          </Button>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative py-16 px-6 bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="max-w-4xl mx-auto text-center">
