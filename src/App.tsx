@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import GenerateDocsPage from "./pages/GenerateDocsPage";
+import InfraDocsPage from "./pages/InfraDocsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,6 +19,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<GenerateDocsPage />} />
+            <Route path="/infra" element={<InfraDocsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
