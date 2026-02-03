@@ -128,16 +128,21 @@ Open index.html in any web browser to view the documentation.
       {/* Navigation */}
       <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <FileText className="h-5 w-5 text-primary" />
             <span className="font-semibold">GitDocs</span>
+          </Link>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/home">Accueil</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/infra">
+                <Server className="h-4 w-4 mr-2" />
+                Infra Docs
+              </Link>
+            </Button>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/infra">
-              <Server className="h-4 w-4 mr-2" />
-              Documentation Infrastructure
-            </Link>
-          </Button>
         </div>
       </nav>
 
