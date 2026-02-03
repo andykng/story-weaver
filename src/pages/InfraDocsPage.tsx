@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, 
   Download, 
@@ -12,16 +11,17 @@ import {
   Loader2, 
   CheckCircle2, 
   Server, 
-  Terminal,
   FileJson,
   Building2,
-  Copy,
-  Check
+  Home,
+  BookOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { Link } from "react-router-dom";
+import { ScriptViewer } from "@/components/ScriptViewer";
 
 interface InfraData {
   metadata?: {
@@ -45,7 +45,6 @@ const InfraDocsPage = () => {
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [step, setStep] = useState<"upload" | "configure" | "generating" | "preview">("upload");
-  const [copiedScript, setCopiedScript] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,17 +137,6 @@ const InfraDocsPage = () => {
     window.open(url, "_blank");
   };
 
-  const copyToClipboard = async (text: string, scriptType: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedScript(scriptType);
-    toast.success("Commande copiée !");
-    setTimeout(() => setCopiedScript(null), 2000);
-  };
-
-  const bashCommand = `curl -O https://id-preview--a68ba116-2582-42d9-8106-d88593fee4ac.lovable.app/scripts/collect-infra.sh && chmod +x collect-infra.sh && ./collect-infra.sh`;
-  
-  const pythonCommand = `curl -O https://id-preview--a68ba116-2582-42d9-8106-d88593fee4ac.lovable.app/scripts/collect-infra.py && pip install psutil && python3 collect-infra.py`;
-
   const resetForm = () => {
     setInfraData(null);
     setProjectName("");
@@ -166,20 +154,26 @@ const InfraDocsPage = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
+            <Link to="/home" className="p-2 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
               <Server className="h-6 w-6 text-primary" />
-            </div>
+            </Link>
             <div>
               <h1 className="text-xl font-bold">InfraDocs</h1>
               <p className="text-sm text-muted-foreground">Documentation d'Infrastructure</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/home">
+                <Home className="h-4 w-4 mr-2" />
+                Accueil
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild>
-              <a href="/">
-                <FileText className="h-4 w-4 mr-2" />
+              <Link to="/">
+                <BookOpen className="h-4 w-4 mr-2" />
                 GitHub Docs
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
@@ -199,86 +193,8 @@ const InfraDocsPage = () => {
               </p>
             </div>
 
-            {/* Scripts de collecte */}
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Terminal className="h-5 w-5" />
-                  Étape 1: Collecter les informations serveur
-                </CardTitle>
-                <CardDescription>
-                  Exécutez l'un de ces scripts sur votre serveur pour collecter les informations système
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="bash">
-                  <TabsList className="grid w-full grid-cols-2 max-w-md">
-                    <TabsTrigger value="bash">Script Bash</TabsTrigger>
-                    <TabsTrigger value="python">Script Python</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="bash" className="space-y-4">
-                    <div className="bg-muted rounded-lg p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <code className="text-sm break-all">{bashCommand}</code>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => copyToClipboard(bashCommand, "bash")}
-                        >
-                          {copiedScript === "bash" ? (
-                          <Check className="h-4 w-4 text-success" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" asChild>
-                        <a href="/scripts/collect-infra.sh" download>
-                          <Download className="h-4 w-4 mr-2" />
-                          Télécharger le script
-                        </a>
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Compatible avec la plupart des distributions Linux (Ubuntu, Debian, CentOS, RHEL, etc.)
-                    </p>
-                  </TabsContent>
-                  
-                  <TabsContent value="python" className="space-y-4">
-                    <div className="bg-muted rounded-lg p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <code className="text-sm break-all">{pythonCommand}</code>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => copyToClipboard(pythonCommand, "python")}
-                        >
-                          {copiedScript === "python" ? (
-                            <Check className="h-4 w-4 text-success" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" asChild>
-                        <a href="/scripts/collect-infra.py" download>
-                          <Download className="h-4 w-4 mr-2" />
-                          Télécharger le script
-                        </a>
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Compatible Linux, macOS et Windows. Nécessite Python 3.6+ et psutil.
-                    </p>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            {/* Scripts de collecte - Affichage direct */}
+            <ScriptViewer />
 
             {/* Upload JSON */}
             <Card className="border-2 border-dashed">

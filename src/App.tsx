@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import GenerateDocsPage from "./pages/GenerateDocsPage";
 import InfraDocsPage from "./pages/InfraDocsPage";
+import LandingPage from "./pages/LandingPage";
+import AdminToolsPage from "./pages/AdminToolsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,8 +20,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/home" element={<LandingPage />} />
             <Route path="/" element={<GenerateDocsPage />} />
             <Route path="/infra" element={<InfraDocsPage />} />
+            <Route path="/tools" element={<AdminToolsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
