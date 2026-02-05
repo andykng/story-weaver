@@ -93,9 +93,10 @@ interface InfraData {
 }
 
 interface GenerateInfraDocsRequest {
-  infraData: InfraData;
+  infraData: InfraData | InfraData[];
   projectName?: string;
   companyName?: string;
+  multiServer?: boolean;
 }
 
 serve(async (req) => {
@@ -109,13 +110,64 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { infraData, projectName, companyName }: GenerateInfraDocsRequest = await req.json();
+    const { infraData, projectName, companyName, multiServer }: GenerateInfraDocsRequest = await req.json();
 
     if (!infraData) {
       throw new Error("Infrastructure data is required");
     }
 
-    const systemPrompt = `Tu es un expert en documentation d'infrastructure IT et en architecture système. Génère une documentation technique complète et professionnelle en format HTML avec CSS intégré.
+    const isMultiServer = multiServer && Array.isArray(infraData);
+    const formattedData = JSON.stringify(infraData, null, 2);
+
+    const basePromptSuffix = `
+Génère les diagrammes Mermaid suivants:
+- Architecture système (flowchart TD montrant les composants)
+- Topologie réseau (les interfaces et connexions)
+- Stack logicielle (les services et leurs interactions)
+
+Utilise ce framework CSS pour le style GitHub:
+- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif
+- Font code: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace
+- Couleur primaire: #0969da pour les liens
+- Fond: #ffffff, secondaire: #f6f8fa
+- Couleur bordure: #d0d7de
+- Max-width: 1012px centré
+
+Ajoute des badges/indicateurs visuels pour:
+- État des services (vert = OK, rouge = erreur)
+- Utilisation disque (jauge visuelle)
+- Utilisation mémoire (jauge visuelle)
+
+IMPORTANT: Ta réponse doit être UNIQUEMENT le document HTML complet, commençant par <!DOCTYPE html> et terminant par </html>. Pas de markdown, pas d'explications.`;
+
+    const systemPrompt = isMultiServer 
+      ? `Tu es un expert en documentation d'infrastructure IT et en architecture système. Génère une documentation technique complète et professionnelle en format HTML avec CSS intégré pour une INFRASTRUCTURE MULTI-SERVEURS.
+
+IMPORTANT: Toute la documentation doit être rédigée EN FRANÇAIS.
+
+La documentation doit:
+1. Être stylisée comme un README GitHub (propre, lisible, monospace pour le code)
+2. Inclure une page HTML complète avec CSS intégré
+3. Utiliser un design moderne et responsive
+4. Inclure la coloration syntaxique pour les blocs de code
+5. Générer des diagrammes Mermaid.js pour l'architecture système globale
+6. Être autonome (fichier HTML unique avec tout le CSS inline)
+
+Structure spécifique MULTI-SERVEURS:
+1. **Page de garde** - Nom du projet, entreprise, date, nombre de serveurs
+2. **Vue d'ensemble** - Résumé exécutif de l'infrastructure globale
+3. **Tableau comparatif** - Tableau HTML comparant tous les serveurs (CPU, RAM, Stockage, OS)
+4. **Architecture Globale** (diagramme Mermaid) - Relations et rôles des serveurs
+5. **Fiches serveurs individuelles** - Section détaillée pour chaque serveur
+6. **Topologie réseau** (diagramme Mermaid) - IPs, connexions entre serveurs
+7. **Analyse des ressources** - Jauges visuelles pour chaque serveur
+8. **Services et conteneurs** - Vue globale de tous les services
+9. **Recommandations** - Suggestions d'amélioration, équilibrage de charge
+10. **Annexes** - Données brutes JSON
+
+Utilise des couleurs différentes pour distinguer les serveurs dans les diagrammes.
+${basePromptSuffix}`
+      : `Tu es un expert en documentation d'infrastructure IT et en architecture système. Génère une documentation technique complète et professionnelle en format HTML avec CSS intégré.
 
 IMPORTANT: Toute la documentation doit être rédigée EN FRANÇAIS.
 
@@ -140,30 +192,22 @@ Structure de la documentation d'infrastructure:
 10. **Logiciels Installés** - Versions des composants majeurs
 11. **Recommandations** - Suggestions d'amélioration basées sur l'analyse
 12. **Annexes** - Données brutes JSON
+${basePromptSuffix}`;
 
-Génère les diagrammes Mermaid suivants:
-- Architecture système (flowchart TD montrant les composants)
-- Topologie réseau (les interfaces et connexions)
-- Stack logicielle (les services et leurs interactions)
+    const userPrompt = isMultiServer
+      ? `Génère une documentation HTML/CSS complète EN FRANÇAIS pour cette infrastructure MULTI-SERVEURS:
 
-Utilise ce framework CSS pour le style GitHub:
-- Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif
-- Font code: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace
-- Couleur primaire: #0969da pour les liens
-- Fond: #ffffff, secondaire: #f6f8fa
-- Couleur bordure: #d0d7de
-- Max-width: 1012px centré
+${projectName ? `**Nom du Projet**: ${projectName}` : ''}
+${companyName ? `**Entreprise**: ${companyName}` : ''}
+**Nombre de serveurs**: ${(infraData as InfraData[]).length}
 
-Ajoute des badges/indicateurs visuels pour:
-- État des services (vert = OK, rouge = erreur)
-- Utilisation disque (jauge visuelle)
-- Utilisation mémoire (jauge visuelle)
+**Données d'Infrastructure Collectées**:
+\`\`\`json
+${formattedData}
+\`\`\`
 
-IMPORTANT: Ta réponse doit être UNIQUEMENT le document HTML complet, commençant par <!DOCTYPE html> et terminant par </html>. Pas de markdown, pas d'explications.`;
-
-    const formattedData = JSON.stringify(infraData, null, 2);
-    
-    const userPrompt = `Génère une documentation HTML/CSS complète EN FRANÇAIS pour cette infrastructure serveur:
+Génère une documentation complète avec tableau comparatif des serveurs, diagrammes d'architecture globale, et sections détaillées pour chaque serveur.`
+      : `Génère une documentation HTML/CSS complète EN FRANÇAIS pour cette infrastructure serveur:
 
 ${projectName ? `**Nom du Projet**: ${projectName}` : ''}
 ${companyName ? `**Entreprise**: ${companyName}` : ''}
