@@ -32,10 +32,10 @@ interface InfraData {
     };
   };
   memory?: {
-    total_gb: number;
-    used_gb: number;
-    available_gb: number;
-    swap_total_gb: number;
+    total_gb: number | string;
+    used_gb: number | string;
+    available_gb: number | string;
+    swap_total_gb: number | string;
   };
   disks?: Array<{
     device: string;
@@ -129,44 +129,64 @@ Style:
 
 Format de sortie: Texte brut formaté en Markdown, prêt à être copié dans LinkedIn.`;
 
-    // Préparer un résumé des données des serveurs
-    const serversSummary = servers.map((server, index) => {
-      const summary: string[] = [];
-      
-      if (server.system) {
-        summary.push(`**Serveur ${index + 1}: ${server.system.hostname}**`);
-        summary.push(`- OS: ${server.system.os}`);
-        summary.push(`- Architecture: ${server.system.architecture}`);
-        if (server.system.uptime) {
-          summary.push(`- Uptime: ${server.system.uptime.days} jours`);
-        }
+    // Helpers: accepter number/string venant des scripts
+    const toNum = (v: unknown): number | null => {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string") {
+        const n = Number(v.replace(",", "."));
+        return Number.isFinite(n) ? n : null;
       }
-      
-      if (server.cpu) {
-        summary.push(`- CPU: ${server.cpu.model} (${server.cpu.cores} cores, ${server.cpu.threads} threads)`);
-      }
-      
-      if (server.memory) {
-        const usagePercent = ((server.memory.used_gb / server.memory.total_gb) * 100).toFixed(1);
-        summary.push(`- RAM: ${server.memory.total_gb.toFixed(1)} GB (${usagePercent}% utilisé)`);
-      }
-      
-      if (server.disks && server.disks.length > 0) {
-        const mainDisk = server.disks[0];
-        summary.push(`- Stockage: ${mainDisk.size} (${mainDisk.usage_percent}% utilisé)`);
-      }
-      
-      if (server.docker?.installed) {
-        summary.push(`- Docker: ${server.docker.containers?.length || 0} conteneurs actifs`);
-      }
-      
-      if (server.security) {
-        summary.push(`- Firewall: ${server.security.firewall_status}`);
-        summary.push(`- Utilisateurs: ${server.security.user_count}`);
-      }
+      return null;
+    };
 
-      return summary.join('\n');
-    }).join('\n\n');
+    // Préparer un résumé des données des serveurs
+    const serversSummary = servers
+      .map((server, index) => {
+        const summary: string[] = [];
+
+        if (server.system) {
+          summary.push(`**Serveur ${index + 1}: ${server.system.hostname}**`);
+          summary.push(`- OS: ${server.system.os}`);
+          summary.push(`- Architecture: ${server.system.architecture}`);
+          if (server.system.uptime) {
+            summary.push(`- Uptime: ${server.system.uptime.days} jours`);
+          }
+        }
+
+        if (server.cpu) {
+          summary.push(`- CPU: ${server.cpu.model} (${server.cpu.cores} cores, ${server.cpu.threads} threads)`);
+        }
+
+        if (server.memory) {
+          const total = toNum(server.memory.total_gb);
+          const used = toNum(server.memory.used_gb);
+
+          if (total && total > 0) {
+            const usagePercent = used != null ? ((used / total) * 100).toFixed(1) : "?";
+            const usedLabel = used != null ? used.toFixed(1) : "?";
+            summary.push(`- RAM: ${total.toFixed(1)} GB (≈${usedLabel} GB, ${usagePercent}% utilisé)`);
+          } else {
+            summary.push(`- RAM: données indisponibles`);
+          }
+        }
+
+        if (server.disks && server.disks.length > 0) {
+          const mainDisk = server.disks[0];
+          summary.push(`- Stockage: ${mainDisk.size} (${mainDisk.usage_percent}% utilisé)`);
+        }
+
+        if (server.docker?.installed) {
+          summary.push(`- Docker: ${server.docker.containers?.length || 0} conteneurs actifs`);
+        }
+
+        if (server.security) {
+          summary.push(`- Firewall: ${server.security.firewall_status}`);
+          summary.push(`- Utilisateurs: ${server.security.user_count}`);
+        }
+
+        return summary.join("\n");
+      })
+      .join("\n\n");
 
     const userPrompt = `Génère un article LinkedIn professionnel EN FRANÇAIS pour documenter cette infrastructure:
 
