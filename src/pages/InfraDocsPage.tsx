@@ -292,7 +292,7 @@ const InfraDocsPage = () => {
                   <td className="p-2 text-muted-foreground">RAM</td>
                   {serverFiles.map(server => (
                     <td key={server.id} className="p-2">
-                      {server.data.memory?.total_gb?.toFixed(1) || "-"} GB
+                      {server.data.memory?.total_gb ? Number(server.data.memory.total_gb).toFixed(1) : "-"} GB
                     </td>
                   ))}
                 </tr>
@@ -449,7 +449,7 @@ const InfraDocsPage = () => {
                       <div>
                         <p className="font-medium">{server.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {server.data.system?.os} • {server.data.cpu?.cores || "?"} cores • {server.data.memory?.total_gb?.toFixed(1) || "?"} GB RAM
+                          {server.data.system?.os} • {server.data.cpu?.cores || "?"} cores • {server.data.memory?.total_gb ? Number(server.data.memory.total_gb).toFixed(1) : "?"} GB RAM
                         </p>
                       </div>
                     </div>
